@@ -1,9 +1,7 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "next.config.js",
-      "use": "@vercel/next"
-    }
-  ]
+    "version": 2,
+    "framework": "nextjs",
+    "buildCommand": "cd web && pnpm install && pnpm run build",
+    "outputDirectory": "web/.next",
+    "installCommand": "pnpm install"
 }
