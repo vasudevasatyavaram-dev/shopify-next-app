@@ -22,3 +22,37 @@ RESULT: Build now succeeds ✓
 - Compiled successfully in 24.7s
 - All routes generated correctly including /api/hello and /api/webhooks
 
+=== Log Entry: 2025-12-11T14:11:57 ===
+
+PLANNING: WhatsApp Order Notification via Evolution API
+
+REQUIREMENT:
+- Listen for Shopify order creation webhook
+- Extract customer phone, name, order items, total, tags
+- Send WhatsApp message via Evolution API
+
+FILES TO CREATE:
+1. web/lib/evolution-api.ts - Evolution API service
+2. web/app/api/webhooks/orders/route.ts - Order webhook handler
+
+FILES TO MODIFY:
+1. web/lib/shopify/register-webhooks.ts - Add ORDERS_CREATE handler
+
+ENV VARS NEEDED:
+- EVOLUTION_API_URL
+- EVOLUTION_API_KEY
+- EVOLUTION_INSTANCE
+
+STATUS: Awaiting user approval on implementation plan
+
+=== Log Entry: 2025-12-11T15:25:21 ===
+
+PHASE 1 and 2 COMPLETE: Created Evolution API Service
+
+FILE CREATED: web/lib/evolution-api.ts
+- formatPhoneForEvolution() - strips + prefix, validates 10-15 digits
+- buildOrderMessage() - creates WhatsApp message with order details
+- sendOrderNotification() - POSTs to Evolution API with instanceName
+
+NEXT: Phase 3 - Create order webhook endpoint
+
