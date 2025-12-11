@@ -1,0 +1,24 @@
+=== Log Entry: 2025-12-10T17:17:27 ===
+
+ISSUE: Shopify API Initialization Build Error
+- Error: "Cannot initialize Shopify API Library. Missing values for: apiSecretKey, hostName, apiKey"
+- Location: /api/hello route build failure
+- Root Cause: Shopify API was being initialized at module load time with empty fallback strings when env vars are missing
+
+FIX APPLIED:
+1. Modified `web/lib/shopify/initialize-context.ts`:
+   - Changed from eager module-level initialization to lazy singleton pattern
+   - API now only initializes when first accessed via `getShopify()` function
+   - Added proper error handling with descriptive message for missing env vars
+
+2. Updated all consuming files to call `getShopify()` function:
+   - `web/lib/shopify/verify.ts`
+   - `web/lib/shopify/register-webhooks.ts`
+   - `web/lib/shopify/gdpr.ts`
+   - `web/lib/get-products.ts`
+   - `web/app/api/webhooks/route.ts`
+
+RESULT: Build now succeeds ✓
+- Compiled successfully in 24.7s
+- All routes generated correctly including /api/hello and /api/webhooks
+

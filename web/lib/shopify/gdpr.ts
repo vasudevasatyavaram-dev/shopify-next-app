@@ -1,5 +1,5 @@
 import { DeliveryMethod } from "@shopify/shopify-api";
-import shopify from "./initialize-context";
+import getShopify from "./initialize-context";
 
 export function setupGDPRWebHooks(path: string) {
   /**
@@ -8,7 +8,7 @@ export function setupGDPRWebHooks(path: string) {
    *
    * https://shopify.dev/apps/webhooks/configuration/mandatory-webhooks#customers-data_request
    */
-  return shopify.webhooks.addHandlers({
+  return getShopify().webhooks.addHandlers({
     CUSTOMERS_DATA_REQUEST: {
       deliveryMethod: DeliveryMethod.Http,
       callbackUrl: path,

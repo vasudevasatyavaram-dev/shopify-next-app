@@ -1,6 +1,6 @@
 import { DeliveryMethod, Session } from "@shopify/shopify-api";
 import { setupGDPRWebHooks } from "./gdpr";
-import shopify from "./initialize-context";
+import getShopify from "./initialize-context";
 import { AppInstallations } from "../db/app-installations";
 
 let webhooksInitialized = false;
@@ -8,7 +8,7 @@ let webhooksInitialized = false;
 export function addHandlers() {
   if (!webhooksInitialized) {
     setupGDPRWebHooks("/api/webhooks");
-    shopify.webhooks.addHandlers({
+    getShopify().webhooks.addHandlers({
       ["APP_UNINSTALLED"]: {
         deliveryMethod: DeliveryMethod.Http,
         callbackUrl: "/api/webhooks",
@@ -27,6 +27,6 @@ export function addHandlers() {
 
 export async function registerWebhooks(session: Session) {
   addHandlers();
-  const responses = await shopify.webhooks.register({ session });
+  const responses = await getShopify().webhooks.register({ session });
   console.log("Webhooks added", responses);
 }
