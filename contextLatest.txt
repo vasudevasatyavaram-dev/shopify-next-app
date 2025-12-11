@@ -56,3 +56,39 @@ FILE CREATED: web/lib/evolution-api.ts
 
 NEXT: Phase 3 - Create order webhook endpoint
 
+=== Log Entry: 2025-12-11T15:30:24 ===
+
+PHASE 3 COMPLETE: Created Order Webhook Endpoint
+
+FILE CREATED: web/app/api/webhooks/orders/route.ts
+- Receives Shopify ORDER_CREATE webhooks
+- Extracts: phone, firstName, items, vendors, totalPrice, currency
+- Calls sendOrderNotification() from evolution-api.ts
+- Returns 500 on failure (allows Shopify retry)
+- Returns 200 on success or if no phone number
+
+NEXT: Phase 4 - Register ORDERS_CREATE webhook
+
+=== Log Entry: 2025-12-11T15:33:18 ===
+
+PHASE 4 COMPLETE: Registered ORDERS_CREATE Webhook
+
+FILE MODIFIED: web/lib/shopify/register-webhooks.ts
+- Added ORDERS_CREATE handler in addHandlers() function
+- Points to /api/webhooks/orders endpoint
+- Matches exact diff from implementation plan
+
+NEXT: Phase 5 - Build & Deploy
+
+=== Log Entry: 2025-12-11T15:35:31 ===
+
+PHASE 5: Build & Deploy
+
+LOCAL BUILD SKIPPED:
+- PowerShell execution policy prevents npm/pnpm from running
+- Will verify build on Vercel instead
+
+USER ACTION REQUIRED:
+- Deploy to Vercel
+- Monitor build logs for any errors
+- If build succeeds, proceed to Phase 6 (Testing)

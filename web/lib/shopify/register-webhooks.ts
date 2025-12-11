@@ -17,6 +17,10 @@ export function addHandlers() {
           await AppInstallations.delete(shop);
         },
       },
+      ["ORDERS_CREATE"]: {
+        deliveryMethod: DeliveryMethod.Http,
+        callbackUrl: "/api/webhooks/orders",
+      },
     });
     console.log("Added handlers");
     webhooksInitialized = true;
