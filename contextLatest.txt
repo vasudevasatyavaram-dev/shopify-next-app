@@ -160,3 +160,20 @@ NEXT STEPS:
 1. User: Add `DATABASE_URL` and `DIRECT_DATABASE_URL` to Vercel (Tokyo region strings provided).
 2. User: Redeploy to Vercel.
 3. User: Test with new order. If DB still fails, message will now be sent with just vendor names.
+
+=== Log Entry: 2025-12-14T06:43:22 ===
+
+PHASE 7 DEBUG: Empty Database Issue
+
+ISSUE: User reported "Supabase still empty" after reinstalling/using app. 
+ROOT CAUSE: The `verifyRequest` function in `web/lib/shopify/verify.ts` was not passing `store: true` to `handleSessionToken`. This meant sessions were being verified but NEVER saved to the database.
+
+FIX APPLIED:
+- Modified `web/lib/shopify/verify.ts`: Updated `verifyRequest` to call `handleSessionToken(..., true)`.
+
+NEXT STEPS:
+1. User: Redeploy to Vercel (Critical).
+2. User: Open the app in Shopify Admin (this triggers `verifyRequest` -> which will now SAVE the session).
+3. User: Check Supabase again - `Session` table should now have data.
+4. User: Test order webhook again.
+

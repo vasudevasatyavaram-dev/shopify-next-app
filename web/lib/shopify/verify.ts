@@ -47,7 +47,7 @@ export async function verifyRequest(
   if (!bearerPresent || !sessionToken) {
     throw new Error("No bearer or session token present");
   }
-  return handleSessionToken(sessionToken, isOnline);
+  return handleSessionToken(sessionToken, isOnline, true);
 }
 
 /**
