@@ -191,9 +191,9 @@ export async function POST(req: Request) {
 
         if (!result.success) {
             console.error("Failed to send WhatsApp notification:", result.error);
-            // Return 500 so Shopify retries the webhook
+            // Return 200 to prevent Shopify retrying (Graceful Failure)
             return new Response(JSON.stringify({ error: result.error }), {
-                status: 500,
+                status: 200,
             });
         }
 
@@ -201,12 +201,12 @@ export async function POST(req: Request) {
         return new Response(null, { status: 200 });
     } catch (error) {
         console.error("Order webhook error:", error);
-        // Return 500 so Shopify retries
+        // Return 200 to prevent retry loop
         return new Response(
             JSON.stringify({
                 error: error instanceof Error ? error.message : "Unknown error",
             }),
-            { status: 500 }
+            { status: 200 }
         );
     }
 }
