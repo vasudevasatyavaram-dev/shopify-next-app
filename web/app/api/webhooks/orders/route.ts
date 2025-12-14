@@ -1,16 +1,19 @@
 import {
     sendOrderNotification,
     formatPhoneForEvolution,
+    VendorInfo,
 } from "@/lib/evolution-api";
 import getShopify from "@/lib/shopify/initialize-context";
 import { addHandlers } from "@/lib/shopify/register-webhooks";
+import { findSessionsByShop } from "@/lib/db/session-storage";
 import { headers } from "next/headers";
+import { Session } from "@shopify/shopify-api";
 
 // Shopify order webhook payload types
 interface ShopifyLineItem {
     title: string;
     quantity: number;
-    vendor: string;
+    product_id: number;
 }
 
 interface ShopifyCustomer {
@@ -35,8 +38,67 @@ interface ShopifyOrder {
     currency: string;
 }
 
+// GraphQL response types
+interface MetaobjectField {
+    key: string;
+    value: string;
+}
+
+interface VendorMetafieldResponse {
+    product: {
+        metafield: {
+            reference: {
+                fields: MetaobjectField[];
+            } | null;
+        } | null;
+    } | null;
+}
+
+/**
+ * Fetch vendor info from product metafield custom.vendor
+ */
+async function fetchVendorInfo(
+    productId: number,
+    session: Session
+): Promise<VendorInfo> {
+    try {
+        const client = new (getShopify().clients.Graphql)({ session });
+        const gid = `gid://shopify/Product/${productId}`;
+
+        const { data } = await client.request<VendorMetafieldResponse>(
+            `
+            query getProductVendor($id: ID!) {
+                product(id: $id) {
+                    metafield(namespace: "custom", key: "vendor") {
+                        reference {
+                            ... on Metaobject {
+                                fields {
+                                    key
+                                    value
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        `,
+            { variables: { id: gid } }
+        );
+
+        const fields = data?.product?.metafield?.reference?.fields || [];
+        const name = fields.find((f) => f.key === "name")?.value || "Vendor";
+        const phone = fields.find((f) => f.key === "phone")?.value || null;
+
+        return { name, phone };
+    } catch (error) {
+        console.error(`Error fetching vendor for product ${productId}:`, error);
+        return { name: "Vendor", phone: null };
+    }
+}
+
 export async function POST(req: Request) {
     const topic = (await headers()).get("x-shopify-topic") as string;
+    const shopDomain = (await headers()).get("x-shopify-shop-domain") as string;
 
     // Only process orders/create webhook
     if (topic !== "orders/create") {
@@ -58,6 +120,7 @@ export async function POST(req: Request) {
         console.log("=== ORDER WEBHOOK RECEIVED ===");
         console.log("Order ID:", order.id);
         console.log("Order Number:", order.order_number);
+        console.log("Shop:", shopDomain);
 
         // Extract customer phone number
         const phone =
@@ -77,6 +140,24 @@ export async function POST(req: Request) {
             return new Response(null, { status: 200 });
         }
 
+        // Get session for GraphQL calls
+        const sessions = await findSessionsByShop(shopDomain);
+        if (sessions.length === 0) {
+            console.error("No session found for shop:", shopDomain);
+            return new Response(
+                JSON.stringify({ error: "No session found" }),
+                { status: 500 }
+            );
+        }
+        const session = sessions[0];
+
+        // Fetch vendor info for each product
+        console.log("Fetching vendor info for", order.line_items.length, "items");
+        const vendorPromises = order.line_items.map((item) =>
+            fetchVendorInfo(item.product_id, session)
+        );
+        const vendors = await Promise.all(vendorPromises);
+
         // Extract order details
         const orderDetails = {
             orderNumber: order.order_number.toString(),
@@ -84,11 +165,10 @@ export async function POST(req: Request) {
             items: order.line_items.map((item) => ({
                 title: item.title,
                 quantity: item.quantity,
-                vendor: item.vendor,
             })),
             totalPrice: order.total_price,
             currency: order.currency,
-            vendors: order.line_items.map((item) => item.vendor).filter(Boolean),
+            vendors: vendors,
         };
 
         // Send WhatsApp notification

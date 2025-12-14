@@ -8,13 +8,18 @@ interface SendMessageResult {
     error?: string;
 }
 
-interface OrderDetails {
+export interface VendorInfo {
+    name: string;
+    phone: string | null; // Domestic format (10 digits)
+}
+
+export interface OrderDetails {
     orderNumber: string;
     firstName: string;
-    items: Array<{ title: string; quantity: number; vendor: string }>;
+    items: Array<{ title: string; quantity: number }>;
     totalPrice: string;
     currency: string;
-    vendors: string[];
+    vendors: VendorInfo[];
 }
 
 /**
@@ -42,25 +47,42 @@ export function formatPhoneForEvolution(phone: string | null): string | null {
 
 /**
  * Build WhatsApp message from order details
+ * Includes wa.me links for vendor contact
  */
 export function buildOrderMessage(order: OrderDetails): string {
     const itemsList = order.items
         .map((item) => `• ${item.title} x${item.quantity}`)
         .join("\n");
 
-    const uniqueVendors = Array.from(new Set(order.vendors));
-    const vendorText = uniqueVendors.join(", ");
+    // Deduplicate vendors by name
+    const uniqueVendorsMap = new Map<string, VendorInfo>();
+    for (const vendor of order.vendors) {
+        if (!uniqueVendorsMap.has(vendor.name)) {
+            uniqueVendorsMap.set(vendor.name, vendor);
+        }
+    }
+    const uniqueVendors = Array.from(uniqueVendorsMap.values());
 
-    return `Hi ${order.firstName}! 🎉
+    // Build vendor contact list with wa.me links
+    const vendorLinks = uniqueVendors.map((v) => {
+        if (v.phone) {
+            // Add 91 prefix for Indian numbers (domestic format)
+            const cleanPhone = v.phone.replace(/\D/g, "");
+            const intlPhone = `91${cleanPhone}`;
+            return `${v.name}: https://wa.me/${intlPhone}`;
+        }
+        return v.name;
+    });
 
-Thank you for your order!
+    return `Thank you for your order ${order.firstName}! 🎉
 
 📦 Order #${order.orderNumber}
 ${itemsList}
 
 💰 Total: ${order.currency} ${order.totalPrice}
 
-Please contact ${vendorText}`;
+Please contact:
+${vendorLinks.join("\n")}`;
 }
 
 /**

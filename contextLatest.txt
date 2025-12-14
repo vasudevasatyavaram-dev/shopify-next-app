@@ -108,3 +108,25 @@ FIX APPLIED:
 - Now strips trailing slashes before constructing URL
 
 ACTION: Redeploy to Vercel and test again
+
+=== Log Entry: 2025-12-14T04:14:58 ===
+
+PHASE 5 & 6 COMPLETE (by user):
+- Deployed to Vercel
+- Tested order webhook - WhatsApp messages sending and working
+
+PHASE 7 COMPLETE: Vendor WhatsApp Links Enhancement
+
+FILES MODIFIED:
+1. web/lib/evolution-api.ts:
+   - Added VendorInfo interface (name, phone)
+   - Changed vendors from string[] to VendorInfo[]
+   - Updated buildOrderMessage() to create wa.me links with 91 prefix
+   - Updated message template: "Thank you for your order {firstName}!"
+
+2. web/app/api/webhooks/orders/route.ts:
+   - Added fetchVendorInfo() function for GraphQL metafield query
+   - Fetches vendor name/phone from product metafield custom.vendor
+   - Uses stored session for GraphQL calls via findSessionsByShop()
+
+ACTION: Redeploy to Vercel and test vendor links
