@@ -14,6 +14,7 @@ interface ShopifyLineItem {
     title: string;
     quantity: number;
     product_id: number;
+    vendor: string;
 }
 
 interface ShopifyCustomer {
@@ -140,23 +141,37 @@ export async function POST(req: Request) {
             return new Response(null, { status: 200 });
         }
 
-        // Get session for GraphQL calls
-        const sessions = await findSessionsByShop(shopDomain);
-        if (sessions.length === 0) {
-            console.error("No session found for shop:", shopDomain);
-            return new Response(
-                JSON.stringify({ error: "No session found" }),
-                { status: 500 }
+        // Fetch vendor info (Fail-open: if DB/GraphQL fails, fallback to basic names)
+        let vendors: VendorInfo[] = [];
+        try {
+            // Get session for GraphQL calls
+            const sessions = await findSessionsByShop(shopDomain);
+            if (sessions.length > 0) {
+                const session = sessions[0];
+                console.log(
+                    "Fetching vendor info for",
+                    order.line_items.length,
+                    "items"
+                );
+                const vendorPromises = order.line_items.map((item) =>
+                    fetchVendorInfo(item.product_id, session)
+                );
+                vendors = await Promise.all(vendorPromises);
+            } else {
+                console.warn("No session found, using basic vendor names");
+                throw new Error("No session found");
+            }
+        } catch (err) {
+            console.error(
+                "Error fetching extra vendor info (DB/GraphQL), falling back to basic:",
+                err
             );
+            // Fallback: Use line item vendor names without phone numbers
+            vendors = order.line_items.map((item) => ({
+                name: item.vendor || "Vendor",
+                phone: null,
+            }));
         }
-        const session = sessions[0];
-
-        // Fetch vendor info for each product
-        console.log("Fetching vendor info for", order.line_items.length, "items");
-        const vendorPromises = order.line_items.map((item) =>
-            fetchVendorInfo(item.product_id, session)
-        );
-        const vendors = await Promise.all(vendorPromises);
 
         // Extract order details
         const orderDetails = {

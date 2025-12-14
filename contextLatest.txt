@@ -145,4 +145,18 @@ RESOLUTION:
 
 CURRENT STATUS:
 - Codebase is ready for Phase 7 (Vendor Links).
-- User action: Run SQL in Supabase, set Vercel env vars, redeploy.
+
+=== Log Entry: 2025-12-14T06:25:45 ===
+
+PHASE 7 VERIFICATION: Fail-Open Logic Implemented
+
+ISSUE: Database connection error prevents order updates entirely.
+RESOLUTION:
+- Wrapped `findSessionsByShop` and `fetchVendorInfo` in try/catch block.
+- Implemented FAIL-OPEN logic: If DB/GraphQL fails, we catch the error, log it, and proceed with sending the WhatsApp message using basic line item vendor names (without phone/links).
+- Fixed lint error by adding `vendor` to `ShopifyLineItem` interface.
+
+NEXT STEPS:
+1. User: Add `DATABASE_URL` and `DIRECT_DATABASE_URL` to Vercel (Tokyo region strings provided).
+2. User: Redeploy to Vercel.
+3. User: Test with new order. If DB still fails, message will now be sent with just vendor names.
