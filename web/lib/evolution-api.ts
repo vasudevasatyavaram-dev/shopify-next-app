@@ -94,9 +94,12 @@ export async function sendOrderNotification(
         console.log("Phone:", formattedPhone);
         console.log("Order:", orderDetails.orderNumber);
 
+        // Remove trailing slash from apiUrl if present
+        const baseUrl = apiUrl.replace(/\/+$/, "");
+
         // POST to Evolution API
         const response = await fetch(
-            `${apiUrl}/message/sendText/${instanceName}`,
+            `${baseUrl}/message/sendText/${instanceName}`,
             {
                 method: "POST",
                 headers: {
