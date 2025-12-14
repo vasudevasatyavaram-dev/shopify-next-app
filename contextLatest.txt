@@ -130,3 +130,19 @@ FILES MODIFIED:
    - Uses stored session for GraphQL calls via findSessionsByShop()
 
 ACTION: Redeploy to Vercel and test vendor links
+
+=== Log Entry: 2025-12-14T06:09:24 ===
+
+PHASE 7 UPDATE: Supabase Configuration
+
+ISSUE: Phase 7 (GraphQL) failed due to missing DATABASE_URL (needed for session storage).
+RESOLUTION:
+1. Created `sql/vendor_query.sql` to manually create Session tables in Supabase.
+2. User provided Supabase credentials.
+3. Constructed and provided correct Vercel env vars for Tokyo region:
+   - DATABASE_URL (Port 6543, pooler)
+   - DIRECT_DATABASE_URL (Port 5432, session)
+
+CURRENT STATUS:
+- Codebase is ready for Phase 7 (Vendor Links).
+- User action: Run SQL in Supabase, set Vercel env vars, redeploy.
