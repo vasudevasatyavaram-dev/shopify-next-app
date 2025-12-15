@@ -191,4 +191,29 @@ NEXT STEPS:
 2. User: Open app (to fix session).
 3. User: Test order.
 
+=== Log Entry: 2025-12-15T15:04:18 ===
+
+FIX: PgBouncer Prepared Statement Error
+
+ISSUE: 
+- Error: `prepared statement "s2" already exists`
+- Occurs when Prisma uses prepared statements with Supabase's PgBouncer (port 6543)
+- PgBouncer in transaction mode doesn't support prepared statements
+- Caused GraphQL/DB fallback to basic vendor info
+
+ROOT CAUSE:
+- DATABASE_URL uses Supabase pooler (port 6543) which runs PgBouncer
+- PgBouncer in transaction mode can't track prepared statements across connections
+
+FIX APPLIED:
+1. Modified `web/lib/db/prisma-connect.ts`:
+   - Added explicit datasources configuration
+   - Added production-appropriate logging
+
+USER ACTION REQUIRED:
+1. Update Vercel env var DATABASE_URL by adding `?pgbouncer=true` at the end:
+   - Example: `postgres://...@db.xxx.supabase.co:6543/postgres?pgbouncer=true`
+   - This tells Prisma to disable prepared statements
+2. Redeploy to Vercel
+3. Test order webhook again
 
